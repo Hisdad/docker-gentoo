@@ -45,41 +45,41 @@ That is our php image with our diagnostics, about 300Mb.
 
 Our build context has  pre/  .  The dockerfile-glibc copies that. That's (mostly) our portage build configuration. Later images inherit it.
 
-pre/
-`-- etc
-    |-- locale.gen
-    `-- portage
-        |-- env
-        |-- make.conf
-        |-- package.accept_keywords
-        |-- package.env
-        |-- package.mask
-        |   |-- php
-        |   `-- rsync
-        |-- package.unmask
-        |-- package.use
-        |   |-- 00cpu-flags
-        |   |-- curl
-        |   |-- gd
-        |   |-- nextcloud
-        |   |-- openssh
-        |   |-- php
-        |   |-- postgresql
-        |   `-- zlib
-        `-- repos.conf
-            `-- gentoo.conf
+		pre/
+		`-- etc
+				|-- locale.gen
+				`-- portage
+						|-- env
+						|-- make.conf
+						|-- package.accept_keywords
+						|-- package.env
+						|-- package.mask
+						|   |-- php
+						|   `-- rsync
+						|-- package.unmask
+						|-- package.use
+						|   |-- 00cpu-flags
+						|   |-- curl
+						|   |-- gd
+						|   |-- nextcloud
+						|   |-- openssh
+						|   |-- php
+						|   |-- postgresql
+						|   `-- zlib
+						`-- repos.conf
+								`-- gentoo.conf
 
 
 To set up glibc we copy
 
-post-glibc/
-`-- etc
-    |-- group
-    |-- ld.so.conf.d
-    |   `-- stdc++.conf
-    |-- locale.gen
-    |-- passwd
-    `-- shadow
+		post-glibc/
+		`-- etc
+				|-- group
+				|-- ld.so.conf.d
+				|   `-- stdc++.conf
+				|-- locale.gen
+				|-- passwd
+				`-- shadow
 
 
 
@@ -93,7 +93,7 @@ Janos had issues with eselect and php. Just don't bother. For an application ima
 
 Like this
 
-ENTRYPOINT ["/usr/lib64/php7.4/bin/php-fpm", "-F", "-c", "/etc/php/fpm-php7.4/php.ini", "-y", "/etc/php/fpm-php7.4/php-fpm.conf"]
+`ENTRYPOINT ["/usr/lib64/php7.4/bin/php-fpm", "-F", "-c", "/etc/php/fpm-php7.4/php.ini", "-y", "/etc/php/fpm-php7.4/php-fpm.conf"]`
 
 You will see the glibc build fiddling with  .so libraries. This is because some utilies are Cpp and don't use glibc. There is no such thing as glibc++.
 The libraries are part of gcc and the location is version dependent. We "find" them and copy them to a fixed location. We also tell ldconfig where to look.
