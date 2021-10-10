@@ -1,0 +1,25 @@
+# Build php using my prebuilt image that already has glibc and bash in it.
+
+# And Diagnostics
+
+FROM hisdad/diag:diag-latest  as gentoo
+
+
+RUN ROOT=/destination emerge  --quiet  dev-lang/php
+
+#Our  runtime  environment. Php Config here also ldconfig 
+COPY post-php/etc /destination/etc
+
+
+FROM scratch
+COPY --from=gentoo /destination /
+
+RUN ldconfig 
+RUN locale-gen
+#RUN grpck
+#RUN grpconv
+
+
+#ENTRYPOINT ["/usr/lib64/php7.4/bin/php-fpm", "-F", "-c", "/etc/php/fpm-php7.4/php.ini", "-y", "/etc/php/fpm-php7.4/php-fpm.conf"]
+
+CMD ["/bin/bash", "-c", "sleep 3600"]

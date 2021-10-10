@@ -1,0 +1,2 @@
+dev-lang/php  curl fpm pdo sqlite xmlreader  xmlwriter postgres zip gd truetype intl -gdbm 
+app-eselect/eselect-php fpm

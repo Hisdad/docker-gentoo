@@ -1,0 +1,15 @@
+# Add diagnostics tools that will likely be reused
+# This is big and not intended to be booted
+
+FROM hisdad/diag:glibc-latest
+
+
+
+
+RUN ROOT=/destination emerge  --quiet sys-apps/findutils  sys-apps/which app-arch/zstd net-misc/iputils  net-dns/bind-tools \
+	net-misc/netkit-telnetd  net-misc/openssh net-analyzer/tcpdump app-misc/tmux  net-misc/curl net-misc/socat net-analyzer/nmap \
+	sys-apps/iproute2 net-analyzer/traceroute net-misc/iperf app-editors/vim
+
+
+
+CMD ["/bin/bash", "-c", "sleep 3600"]
