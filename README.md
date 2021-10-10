@@ -46,16 +46,16 @@ That is our php image with our diagnostics, about 300Mb.
 Our build context has  pre/  .  The dockerfile-glibc copies that. That's (mostly) our portage build configuration. Later images inherit it.
 
 		pre/
-		`-- etc
+		-- etc
 				|-- locale.gen
-				`-- portage
+				- portage
 						|-- env
 						|-- make.conf
 						|-- package.accept_keywords
 						|-- package.env
 						|-- package.mask
 						|   |-- php
-						|   `-- rsync
+						|   |-- rsync
 						|-- package.unmask
 						|-- package.use
 						|   |-- 00cpu-flags
@@ -65,21 +65,21 @@ Our build context has  pre/  .  The dockerfile-glibc copies that. That's (mostly
 						|   |-- openssh
 						|   |-- php
 						|   |-- postgresql
-						|   `-- zlib
-						`-- repos.conf
-								`-- gentoo.conf
+						|   |-- zlib
+						|-- repos.conf
+								-- gentoo.conf
 
 
 To set up glibc we copy
 
 		post-glibc/
-		`-- etc
+		|-- etc
 				|-- group
 				|-- ld.so.conf.d
-				|   `-- stdc++.conf
+				|   |-- stdc++.conf
 				|-- locale.gen
 				|-- passwd
-				`-- shadow
+				|-- shadow
 
 
 
