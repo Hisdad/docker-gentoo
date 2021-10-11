@@ -67,7 +67,7 @@ Our build context has  pre/  .  The dockerfile-glibc copies that. That's (mostly
 						|   |-- postgresql
 						|   |-- zlib
 						|-- repos.conf
-								-- gentoo.conf
+							  |-- gentoo.conf
 
 
 To set up glibc we copy
