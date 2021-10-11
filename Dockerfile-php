@@ -7,14 +7,14 @@ FROM hisdad/diag:diag-latest  as gentoo
 
 RUN ROOT=/destination emerge  --quiet  dev-lang/php
 
-#Our  runtime  environment. Php Config here also ldconfig 
-COPY post-php/etc /destination/etc
-
-
+# Chuck away build environment.
 FROM scratch
 COPY --from=gentoo /destination /
 
-RUN ldconfig 
+#Our  runtime  environment. Php Config here.
+COPY post-php/ /
+
+RUN ldconfig
 RUN locale-gen
 #RUN grpck
 #RUN grpconv

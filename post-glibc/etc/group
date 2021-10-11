@@ -32,7 +32,6 @@ ntp:x:123:
 cron:x:16:
 crontab:x:122:
 locate:x:121:
-ldap:x:439:
 messagebus:x:117:
 nullmail:x:88:
 postgres:x:70:

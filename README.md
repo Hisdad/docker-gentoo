@@ -34,7 +34,7 @@ This takes about 15 mins.
 
 We run a build with dockerfile-diag, which uses the prior glibc image as a source. 
 
-The result is a fully usable diagnostic image but its about 1.2Gb
+The result is a fully usable diagnostic image but its about 1.2Gb. Note that the programs we have compiled are under /destination which is not part of the path.
 
 We run a build with dockerfile-php,  which uses the prior diag image as a source.
 This takes about 40mins as it pulls in lots of stuff.
@@ -46,16 +46,16 @@ That is our php image with our diagnostics, about 300Mb.
 Our build context has  pre/  .  The dockerfile-glibc copies that. That's (mostly) our portage build configuration. Later images inherit it.
 
 		pre/
-		-- etc
+		'-- etc
 				|-- locale.gen
-				- portage
+				'-- portage
 						|-- env
 						|-- make.conf
 						|-- package.accept_keywords
 						|-- package.env
 						|-- package.mask
 						|   |-- php
-						|   |-- rsync
+						|   '-- rsync
 						|-- package.unmask
 						|-- package.use
 						|   |-- 00cpu-flags
@@ -65,25 +65,46 @@ Our build context has  pre/  .  The dockerfile-glibc copies that. That's (mostly
 						|   |-- openssh
 						|   |-- php
 						|   |-- postgresql
-						|   |-- zlib
-						|-- repos.conf
-							  |-- gentoo.conf
+						|   '-- zlib
+						'-- repos.conf
+								'-- gentoo.conf
+
 
 
 To set up glibc we copy
 
 		post-glibc/
 		|-- etc
-				|-- group
-				|-- ld.so.conf.d
-				|   |-- stdc++.conf
-				|-- locale.gen
-				|-- passwd
-				|-- shadow
+		|   |-- group
+		|   |-- ld.so.conf.d
+		|   |   '-- stdc++.conf
+		|   |-- locale.gen
+		|   |-- passwd
+		|   '-- shadow
+		|-- home
+		'-- run
 
 
 
-At the end we copy post-php/ . This goes to the final image as our application configuration files (php.ini  etc), Empty here
+
+At the end we copy post-php/ . This goes to the final image as our application configuration files (php.ini  etc).
+
+		post-php
+		'-- etc
+				'-- php
+						'-- fpm-php7.4
+								|-- ext-active
+								|-- fpm.d
+								|   '-- www.conf
+								|-- php-fpm.conf
+								'-- php.ini
+
+This was taken from a a working copy. There is a program called php-config. Its installed  under /usr/lib64/php7.4/bin
+If you start the php image under docker
+
+`docker run -it hisdad/diag:php-latest  /bin/bash`
+
+You can run it and it will print the paths to its configuration directories.
 
 
 We do a bit of fiddling to generate the locale and have a  working /etc/passwd  . This is needed for the diagnostic utilites.
@@ -99,7 +120,7 @@ You will see the glibc build fiddling with  .so libraries. This is because some 
 The libraries are part of gcc and the location is version dependent. We "find" them and copy them to a fixed location. We also tell ldconfig where to look.
 
 
-Thankyou Janos and the gentoo team.
+Thank you Janos and the gentoo team.
 
 Enjoy.
 --Dad
