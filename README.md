@@ -25,100 +25,96 @@ Naturally the php image had no tools. Making a fat debian image helped, but it d
 
 ## The procedure:
 
-Generate glibc image -> Add Diagnostics -> Add Application.  Each has a dockerfile and shell script.
+Generate a diagnostics image.
+Generate a diagnostics image with php.
 
-We run a build with dockerfile-glibc as our starting point.
+This pulls official gentoo images and builds out desired system.  To keep our target compiles away from the build system we "emerge" to /destination.
+At at end of that, we source an empty image and copy our build /destination into it. That discards the build system
 
-This pulls official gentoo images and builds glibc. To keep our target compiles away from the build system we "emerge" to /destination.
-This takes about 15 mins.
+Each image is "all in one". In theory we can add to a prior image. However with the portage build system I have been unable to get consistent results even with "--no-cache".
 
-We run a build with dockerfile-diag, which uses the prior glibc image as a source. 
-
-The result is a fully usable diagnostic image but its about 1.2Gb. Note that the programs we have compiled are under /destination which is not part of the path.
-
-We run a build with dockerfile-php,  which uses the prior diag image as a source.
-This takes about 40mins as it pulls in lots of stuff.
-
-At at end of that, we source an empty image and copy our build /destination into it.
-
-That is our php image with our diagnostics, about 300Mb.
-
-Our build context has  pre/  .  The dockerfile-glibc copies that. That's (mostly) our portage build configuration. Later images inherit it.
-
-		pre/
-		'-- etc
-				|-- locale.gen
-				'-- portage
-						|-- env
-						|-- make.conf
-						|-- package.accept_keywords
-						|-- package.env
-						|-- package.mask
-						|   |-- php
-						|   '-- rsync
-						|-- package.unmask
-						|-- package.use
-						|   |-- 00cpu-flags
-						|   |-- curl
-						|   |-- gd
-						|   |-- nextcloud
-						|   |-- openssh
-						|   |-- php
-						|   |-- postgresql
-						|   '-- zlib
-						'-- repos.conf
-								'-- gentoo.conf
-
-
-
-To set up glibc we copy
-
-		post-glibc/
-		|-- etc
-		|   |-- group
-		|   |-- ld.so.conf.d
-		|   |   '-- stdc++.conf
-		|   |-- locale.gen
-		|   |-- passwd
-		|   '-- shadow
-		|-- home
-		'-- run
-
-
+Our build context has  pre/  .  The dockerfile  copies that.
+That's  our portage build configuration and the skeleton for the target build, /destination
+`
+pre
+|-- destination
+|   |-- etc
+|   |-- home
+|   |-- run
+|   |-- tmp
+|   '-- usr
+|       '-- lib
+|           '-- gcc
+'-- etc
+    |-- locale.gen
+    '-- portage
+        |-- env
+        |-- make.conf
+        |-- package.accept_keywords
+        |-- package.env
+        |-- package.mask
+        |   |-- php
+        |   '-- rsync
+        |-- package.unmask
+        |-- package.use
+        |   |-- 00cpu-flags
+        |   |-- curl
+        |   |-- gd
+        |   |-- nextcloud
+        |   |-- openssh
+        |   |-- php
+        |   |-- postgresql
+        |   '-- zlib
+        '-- repos.conf
+            '-- gentoo.conf
+`
 
 
 At the end we copy post-php/ . This goes to the final image as our application configuration files (php.ini  etc).
-
+`
 		post-php
 		'-- etc
-				'-- php
-						'-- fpm-php7.4
-								|-- ext-active
-								|-- fpm.d
-								|   '-- www.conf
-								|-- php-fpm.conf
-								'-- php.ini
+				|-- group
+				|-- ld.so.conf.d
+				|   '-- stdc++.conf
+				|-- locale.gen
+				|-- passwd
+				|-- php
+				|   '-- fpm-php7.4
+				|       |-- ext-active
+				|       |-- fpm.d
+				|       |   '-- www.conf
+				|       |-- php-fpm.conf
+				|       '-- php.ini
+				'-- shadow
+`
 
-This was taken from a a working copy. There is a program called php-config. Its installed  under /usr/lib64/php7.4/bin
-If you start the php image under docker
 
-`docker run -it hisdad/diag:php-latest  /bin/bash`
+or  post-diag
+`
+		post-diag
+		'-- etc
+				|-- group
+				|-- ld.so.conf.d
+				|   '-- stdc++.conf
+				|-- locale.gen
+				|-- passwd
+				'-- shadow
+`
 
-You can run it and it will print the paths to its configuration directories.
 
 
 We do a bit of fiddling to generate the locale and have a  working /etc/passwd  . This is needed for the diagnostic utilites.
 
-Janos had issues with glibc. Now it compiles fine in a ROOT 'd environment
+Janos had issues with glibc. Now it compiles fine in a ROOT 'd environment.
 Janos had issues with eselect and php. Just don't bother. For an application image set the CMD or ENTRYPOINT to the binary.
 
 Like this
 
 `ENTRYPOINT ["/usr/lib64/php7.4/bin/php-fpm", "-F", "-c", "/etc/php/fpm-php7.4/php.ini", "-y", "/etc/php/fpm-php7.4/php-fpm.conf"]`
 
-You will see the glibc build fiddling with  .so libraries. This is because some utilies are Cpp and don't use glibc. There is no such thing as glibc++.
+You will see the builds fiddling with  .so libraries. This is because some utilies are Cpp and don't use glibc. There is no such thing as glibc++.
 The libraries are part of gcc and the location is version dependent. We "find" them and copy them to a fixed location. We also tell ldconfig where to look.
-
 
 Thank you Janos and the gentoo team.
 

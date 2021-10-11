@@ -1,15 +1,42 @@
-# Add diagnostics tools that will likely be reused
-# This is big and not intended to be booted
+# Use the empty image with the portage tree as the first stage
+FROM gentoo/portage:latest as portage
 
-FROM hisdad/diag:glibc-latest
+# Gentoo stage3 is the second stage, basically an unpacked Gentoo Linux
+FROM gentoo/stage3:amd64-nomultilib-openrc as gentoo
 
 
+# Copy the portage tree into gentoo.
+COPY --from=portage /var/db/repos/gentoo /var/db/repos/gentoo
+
+#Our  build environment. Portage config here. Global to all our builds
+# Also creates /destination which is our build target
+COPY pre/ /
 
 
-RUN ROOT=/destination emerge --quiet sys-apps/findutils  sys-apps/which app-arch/zstd net-misc/iputils  net-dns/bind-tools \
-	net-misc/netkit-telnetd  net-misc/openssh net-analyzer/tcpdump app-misc/tmux  net-misc/curl net-misc/socat net-analyzer/nmap \
-	sys-apps/iproute2 net-analyzer/traceroute net-misc/iperf app-editors/vim
+## Any preexisting make.profile not a symlink will cause eselect to fail
 
+#RUN eselect profile  list
+RUN eselect profile  set 12
+
+RUN ROOT=/destination emerge --quiet sys-libs/glibc sys-apps/shadow app-shells/bash sys-apps/findutils  sys-apps/which app-arch/zstd net-misc/iputils  \
+	 net-dns/bind-tools net-misc/netkit-telnetd  net-misc/openssh net-analyzer/tcpdump app-misc/tmux  net-misc/curl net-misc/socat net-analyzer/nmap \
+	sys-apps/iproute2 net-analyzer/traceroute net-misc/iperf app-editors/vim dev-db/postgresql
+
+
+#Copy C++ runtimes. This removes the GCC version from the path
+RUN find /destination/usr/lib/gcc -type f -name "*.so*" -exec cp  {} /destination/usr/lib/gcc/ \;
+
+# Clean up unneeded. 
+
+RUN rm  -f /destination/usr/lib/gcc/*fortran*
+
+# Chuck away build environment.
+FROM scratch
+COPY --from=gentoo /destination /
+
+COPY post-diag/ /
+
+RUN ldconfig ; locale-gen
 
 
 CMD ["/bin/bash", "-c", "sleep 3600"]

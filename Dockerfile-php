@@ -1,11 +1,35 @@
-# Build php using my prebuilt image that already has glibc and bash in it.
+# Build an image php  and diag tools
 
-# And Diagnostics
+# Use the empty image with the portage tree as the first stage
+FROM gentoo/portage:latest as portage
 
-FROM hisdad/diag:diag-latest  as gentoo
+# Gentoo stage3 is the second stage, basically an unpacked Gentoo Linux
+FROM gentoo/stage3:amd64-nomultilib-openrc as gentoo
 
 
-RUN ROOT=/destination emerge  --quiet  dev-lang/php
+# Copy the portage tree into gentoo.
+COPY --from=portage /var/db/repos/gentoo /var/db/repos/gentoo
+
+#Our  build environment. Portage config here. Global to all our builds
+# Also creates /destination which is our build target
+COPY pre/ /
+
+## Any preexisting make.profile not a symlink will cause eselect to fail
+
+#RUN eselect profile  list
+RUN eselect profile  set 12
+
+RUN ROOT=/destination emerge --quiet sys-libs/glibc sys-apps/shadow app-shells/bash sys-apps/findutils  sys-apps/which app-arch/zstd net-misc/iputils  \
+	 net-dns/bind-tools net-misc/netkit-telnetd  net-misc/openssh net-analyzer/tcpdump app-misc/tmux  net-misc/curl net-misc/socat net-analyzer/nmap \
+	sys-apps/iproute2 net-analyzer/traceroute net-misc/iperf app-editors/vim dev-lang/php
+
+#Copy C++ runtimes. This removes the GCC version from the path
+RUN find /destination/usr/lib/gcc -type f -name "*.so*" -exec cp  {} /destination/usr/lib/gcc/ \;
+
+# Clean up unneeded. 
+
+RUN rm  -f /destination/usr/lib/gcc/*fortran*
+
 
 # Chuck away build environment.
 FROM scratch
@@ -14,8 +38,7 @@ COPY --from=gentoo /destination /
 #Our  runtime  environment. Php Config here.
 COPY post-php/ /
 
-RUN ldconfig
-RUN locale-gen
+RUN ldconfig ; locale-gen
 #RUN grpck
 #RUN grpconv
 
